@@ -537,10 +537,52 @@ spring_by_answer_long %>%
 
 
 
-gathercols <- c('grade_expectations_match', 
-                'grade_understanding_match', 
-                'grade_effort_match', 
-                'grade_arbitrary_feel', 
+spring_survey_result_agree_disagree = spring_survey_result_agree_disagree %>% separate(racial_ethnic_identity, c("race_1", "race_2", "race_3"), sep = ",")
+spring_survey_result_agree_disagree = spring_survey_result_agree_disagree %>% separate(gender_identity, c("gender_1", "gender_2", "gender_3"), sep = ",")
+
+gathercols <- c("race_1",
+                "race_2",
+                "race_3") 
+keycol <- c('response_id', 'class_year', 'racial_ethnic_identity', 'gender_identity', 'first_generations_professional', 'lgbtq_plus_identity', 'disability_identify', 'career_plans', 'grade_expectations_match', 
+            'grade_understanding_match', 
+            'grade_effort_match', 
+            'grade_arbitrary_feel', 
+            'grade_different_system_warranted',
+            'change_future_plans')
+valuecol <- "count"
+
+spring_by_answer_long_one <- gather(spring_survey_result_agree_disagree, keycol, valuecol, gathercols, factor_key=TRUE)
+spring_by_answer_long_one = spring_by_answer_long_one %>% filter(!(is.na(valuecol) & keycol != 'race_1'))
+spring_by_answer_long_one = spring_by_answer_long_one %>% select(-keycol)
+colnames(spring_by_answer_long_one)[which(names(spring_by_answer_long_one) == "valuecol")] <- "racial_ethnic_identity"
+
+
+
+gathercols <- c("gender_1",
+                "gender_2",
+                "gender_3") 
+keycol <- c('response_id', 'class_year', 'racial_ethnic_identity', 'gender_identity', 'first_generations_professional', 'lgbtq_plus_identity', 'disability_identify', 'career_plans', 'grade_expectations_match', 
+            'grade_understanding_match', 
+            'grade_effort_match', 
+            'grade_arbitrary_feel', 
+            'grade_different_system_warranted',
+            'change_future_plans', 
+            "racial_ethnic_identity")
+valuecol <- "count"
+
+spring_by_answer_long <- gather(spring_by_answer_long_one, keycol, valuecol, gathercols, factor_key=TRUE)
+spring_by_answer_long = spring_by_answer_long %>% filter(!(is.na(valuecol) & keycol != 'gender_1'))
+# spring_by_answer_long = spring_by_answer_long %>% filter(!is.na(valuecol))
+spring_by_answer_long = spring_by_answer_long %>% select(-keycol)
+colnames(spring_by_answer_long)[which(names(spring_by_answer_long) == "valuecol")] <- "gender_identity"
+
+
+
+
+gathercols <- c('grade_expectations_match',
+                'grade_understanding_match',
+                'grade_effort_match',
+                'grade_arbitrary_feel',
                 'grade_different_system_warranted',
                 # 'prefer_pass_fail',
                 'change_future_plans'
@@ -549,13 +591,15 @@ gathercols <- c('grade_expectations_match',
                 # 'Are you a first-generation professional?'
                 # 'Do you identify as LGBTQ+',
                 # 'Do you identify as a person with a disability?'
-) 
+)
 
 keycol <- c('response_id', 'class_year', 'racial_ethnic_identity', 'gender_identity', 'first_generations_professional', 'lgbtq_plus_identity', 'disability_identify', 'career_plans')
 valuecol <- "count"
+spring_by_answer_long <- gather(spring_by_answer_long, keycol, valuecol, gathercols, factor_key=TRUE)
+spring_by_answer_long = spring_by_answer_long %>% mutate(racial_ethnic_identity = str_trim(racial_ethnic_identity), gender_identity = str_trim(gender_identity))
+# spring_by_answer_long %>% group_by(racial_ethnic_identity, gender_identity) %>% summarise(ppl = n_distinct(response_id))
+# spring_by_answer_long %>% group_by(racial_ethnic_identity) %>% summarise(ppl = n_distinct(response_id))
 
-
-spring_by_answer_long <- gather(spring_survey_result_agree_disagree, keycol, valuecol, gathercols, factor_key=TRUE)
 
 spring_by_answer_long %>%
     group_by(keycol, racial_ethnic_identity) %>%
@@ -569,7 +613,7 @@ spring_by_answer_long %>%
     ggtitle("While all racial identities disagreed strongly that grades matched their understanding of material, black students were \ndisproportionately in disagreement with this statement.") +   
     scale_fill_manual(values=nyuPalette) +
     geom_text(aes(label = percent(count, digits = 0), y = count + 0.025), vjust = 0, size = 5) +
-    labs(caption = "Note: Out of the 180 person survey, 17 students identified as black, 19 identified as Asian, 15 identified as Latinx/Hispanic, \n117 identified as white.") +
+    labs(caption = "Note: Out of the 196 unique identities accounted for, 17 students identified as black, 19 identified as Asian, \n15 identified as Latinx/Hispanic, 130 identified as white, 3 identified as Middle Eastern, and 12 did not answer.") +
     # facet_wrap(~keycol) +
     theme_bw() +
     theme(
@@ -601,7 +645,7 @@ spring_by_answer_long %>%
   scale_y_continuous("% Agree", labels = percent, expand = c(0,0), limits = c(0,1)) +
   ggtitle("Despite feeling like grades did not match their understanding of course material, students identifying as black were \nless likely to say a different grading system is warranted") +   
   scale_fill_manual(values=nyuPalette) +
-  labs(caption = "Note: Out of the 180 person survey, 17 students identified as black, 19 identified as Asian, 15 identified as Latinx/Hispanic, \n117 identified as white.") +
+  labs(caption = "Note: Out of the 196 unique identities accounted for, 17 students identified as black, 19 identified as Asian, \n15 identified as Latinx/Hispanic, 130 identified as white, 3 identified as Middle Eastern, and 12 did not answer.") +
   # facet_wrap(~keycol) +
   theme_bw() +
   theme(
@@ -630,7 +674,8 @@ spring_by_answer_long %>%
   geom_bar(alpha = 1.0, stat = "identity", show.legend = FALSE) +
   scale_x_discrete() +
   scale_y_continuous("% Agree", labels = percent, expand = c(0,0), limits = c(0,1)) +
-  ggtitle("Students identifying as female were much less likekly to agree that grades matched their understanding of course material") +   
+  ggtitle("Students identifying as female were much less likely to agree that grades matched their understanding of course material") +   
+  labs(caption = "Note: Out of the 196 unique identities accounted for, 103 students identified as female, 58 identified as male, \n4 identified as non-binary, 1 identified as neutral, and 20 did not answer.") +
   geom_text(aes(label = percent(count, digits = 0), y = count + 0.025), vjust = 0, size = 5) +
   scale_fill_manual(values=nyuPalette) +
   # facet_wrap(~keycol) +
@@ -648,6 +693,7 @@ spring_by_answer_long %>%
     legend.position = "bottom",
     legend.title=element_blank(),
     legend.key = element_rect(colour = "white"),
+    plot.caption = element_text(hjust = 0, vjust = -3, face="italic", colour="#696969"),
     plot.margin=unit(c(0.5, 1, 1, 0.5),"cm")) +
   coord_flip()
 
@@ -679,16 +725,53 @@ spring_by_answer_long %>%
     legend.key = element_rect(colour = "white")) +
   coord_flip()
 
+
+
+spring_by_answer_long %>%
+  group_by(keycol, racial_ethnic_identity) %>%
+  summarise(count = sum(ifelse(valuecol == 'Agree', 1, 0)) / n() ) %>%
+  filter(racial_ethnic_identity %in% c('Black', 'White', 'Asian', 'Latinex/Hispanic')) %>%
+  ggplot(aes(racial_ethnic_identity, count, group = racial_ethnic_identity, fill = racial_ethnic_identity)) +
+  geom_bar(alpha = 1.0, stat = "identity", show.legend = FALSE) +
+  # scale_x_discrete() +
+  scale_x_discrete(labels=c("Asian", "Black", "Latinx/Hispanic", "White")) +
+  scale_y_continuous("% Agree", labels = percent, ) +
+  ggtitle("Student Agreement With Each Survey Question, by Racial Identity") +   
+  scale_fill_manual(values=nyuPalette) +
+  facet_wrap(~keycol) +
+  labs(caption = "Note: Out of the 196 unique identities accounted for, 17 students identified as black, 19 identified as Asian, 15 identified as Latinx/Hispanic, 130 identified as white, \n3 identified as Middle Eastern, and 12 did not answer.") +
+  geom_text(aes(label = percent(count, digits = 0), y = count + 0.025), hjust = -0.0, size = 3) +
+  # geom_text(size = 4, position = position_stack(vjust=1.05)) + 
+  theme_bw() +
+  theme(
+    plot.title.position = "plot",
+    text = element_text(size=12),
+    axis.line = element_line(size = .2),
+    axis.ticks = element_blank(),
+    plot.title=element_text(vjust=0, hjust=0, face="bold", size = 12),
+    panel.border = element_rect(colour = "white"),
+    panel.grid = element_line(size=0.3),
+    axis.title.y = element_text(size = rel(0)),
+    axis.title.x = element_text(vjust=-.75, size = 10),
+    legend.position = "bottom",
+    legend.title=element_blank(),
+    plot.caption = element_text(hjust = 0, vjust = -3, face="italic", colour="#696969"),
+    plot.margin=unit(c(0.5, 1, 1, 0.5),"cm")) +
+  coord_flip()
+
+
 spring_by_answer_long %>%
   group_by(keycol, gender_identity) %>%
   summarise(count = sum(ifelse(valuecol == 'Agree', 1, 0)) / n() ) %>%
-  filter(gender_identity %in% c('Female', 'Male', 'Non-binary', 'Prefer Not to Answer')) %>%
+  filter(gender_identity %in% c('Female', 'Male')) %>%
   ggplot(aes(gender_identity, count, group = gender_identity, fill = gender_identity)) +
   geom_bar(alpha = 1.0, stat = "identity", show.legend = FALSE) +
   scale_x_discrete() +
   scale_y_continuous("% Agree", labels = percent, ) +
   ggtitle("Student Agreement With Each Survey Question, by Gender Identity") +   
+  labs(caption = "Note: Out of the 196 unique identities accounted for, 103 students identified as female, 58 identified as male, 4 identified as non-binary, 1 identified as neutral, \nand 20 did not answer.") +
   scale_fill_manual(values=nyuPalette) +
+  geom_text(aes(label = percent(count, digits = 0), y = count + 0.025), hjust = 0.3, size = 3) +
   facet_wrap(~keycol) +
   # geom_text(size = 4, position = position_stack(vjust=1.05)) + 
   theme_bw() +
@@ -704,7 +787,9 @@ spring_by_answer_long %>%
     axis.title.x = element_text(vjust=-.75, size = 10),
     legend.position = "bottom",
     legend.title=element_blank(),
-    legend.key = element_rect(colour = "white")) +
+    legend.key = element_rect(colour = "white"),
+    plot.caption = element_text(hjust = 0, vjust = -3, face="italic", colour="#696969"),
+    plot.margin=unit(c(0.5, 1, 1, 0.5),"cm")) +
   coord_flip()
 
 
@@ -1196,12 +1281,69 @@ formattable(spring_survey_result %>%
               "span", style = ~ style(color = "grey", font.weight = "bold")) 
             ))
 
-medians <- spring_survey_result %>%
+
+
+spring_survey_result_one = spring_survey_result %>% separate(`What is your racial/ethnic identity?`, c("race_1", "race_2", "race_3"), sep = ",")
+spring_survey_result_one = spring_survey_result_one %>% separate(`What is your gender identity?`, c("gender_1", "gender_2", "gender_3"), sep = ",")
+
+gathercols <- c("race_1",
+                "race_2",
+                "race_3") 
+
+keycol <- colnames(spring_survey_result_one %>% select(-race_1, -race_2, -race_3, -gender_1, -gender_2, -gender_3))
+valuecol <- "count"
+
+spring_survey_result_one <- gather(spring_survey_result_one, keycol, valuecol, gathercols, factor_key=TRUE)
+spring_survey_result_one = spring_survey_result_one %>% filter(!(is.na(valuecol) & keycol != 'race_1'))
+spring_survey_result_one = spring_survey_result_one %>% select(-keycol)
+colnames(spring_survey_result_one)[which(names(spring_survey_result_one) == "valuecol")] <- "racial_ethnic_identity"
+
+
+
+gathercols <- c("gender_1",
+                "gender_2",
+                "gender_3") 
+keycol <- colnames(spring_survey_result_one %>% select(-gender_1, -gender_2, -gender_3))
+valuecol <- "count"
+
+spring_survey_result_one <- gather(spring_survey_result_one, keycol, valuecol, gathercols, factor_key=TRUE)
+spring_survey_result_one = spring_survey_result_one %>% filter(!(is.na(valuecol) & keycol != 'gender_1'))
+# spring_by_answer_long = spring_by_answer_long %>% filter(!is.na(valuecol))
+spring_survey_result_one = spring_survey_result_one %>% select(-keycol)
+colnames(spring_survey_result_one)[which(names(spring_survey_result_one) == "valuecol")] <- "gender_identity"
+
+spring_survey_result_one = spring_survey_result_one %>% mutate(racial_ethnic_identity = str_trim(racial_ethnic_identity), gender_identity = str_trim(gender_identity))
+
+# gathercols <- c('grade_expectations_match',
+#                 'grade_understanding_match',
+#                 'grade_effort_match',
+#                 'grade_arbitrary_feel',
+#                 'grade_different_system_warranted',
+#                 # 'prefer_pass_fail',
+#                 'change_future_plans'
+#                 # 'What is your racial/ethnic identcity?',
+#                 # 'What is your gender identity?',
+#                 # 'Are you a first-generation professional?'
+#                 # 'Do you identify as LGBTQ+',
+#                 # 'Do you identify as a person with a disability?'
+# )
+# 
+# keycol <- c('response_id', 'class_year', 'racial_ethnic_identity', 'gender_identity', 'first_generations_professional', 'lgbtq_plus_identity', 'disability_identify', 'career_plans')
+# valuecol <- "count"
+# spring_by_answer_long <- gather(spring_by_answer_long, keycol, valuecol, gathercols, factor_key=TRUE)
+# spring_by_answer_long = spring_by_answer_long %>% mutate(racial_ethnic_identity = str_trim(racial_ethnic_identity), gender_identity = str_trim(gender_identity))
+# # spring_by_answer_long %>% group_by(racial_ethnic_identity, gender_identity) %>% summarise(ppl = n_distinct(response_id))
+# # spring_by_answer_long %>% group_by(racial_ethnic_identity) %>% summarise(ppl = n_distinct(response_id))
+
+
+
+
+medians <- spring_survey_result_one %>%
   mutate(
     gpa = (civ_pro_grades + contracts_grades + crimlaw_grades) / 3, 
     class_year = gsub(",.*$", "", `What class year are you?`),
-    racial_ethnic_identity = gsub(",.*$", "", `What is your racial/ethnic identity?`),
-    gender_identity = gsub(",.*$", "", `What is your gender identity?`),
+    racial_ethnic_identity = gsub(",.*$", "", racial_ethnic_identity),
+    gender_identity = gsub(",.*$", "", gender_identity),
     first_generations_professional = gsub(",.*$", "", `Are you a first-generation professional?`),
     lgbtq_plus_identity = gsub(",.*$", "", `Do you identify as LGBTQ+`),
     disability_identify = gsub(",.*$", "", `Do you identify as a person with a disability?`)) %>% 
@@ -1210,13 +1352,13 @@ medians <- spring_survey_result %>%
   summarise(gpa = median(gpa, na.rm = TRUE)) %>% 
   filter(racial_ethnic_identity %in% c("White", "Asian", "Latinex/Hispanic", "Black")) 
 
-spring_survey_result %>%
+spring_survey_result_one %>%
   # filter(valuecol %in% c('A', 'A-', 'B+', 'B', 'B-')) %>%
   mutate(
     gpa = (civ_pro_grades + contracts_grades + crimlaw_grades) / 3, 
     class_year = gsub(",.*$", "", `What class year are you?`),
-    racial_ethnic_identity = gsub(",.*$", "", `What is your racial/ethnic identity?`),
-    gender_identity = gsub(",.*$", "", `What is your gender identity?`),
+    racial_ethnic_identity = gsub(",.*$", "", racial_ethnic_identity),
+    gender_identity = gsub(",.*$", "", gender_identity),
     first_generations_professional = gsub(",.*$", "", `Are you a first-generation professional?`),
     lgbtq_plus_identity = gsub(",.*$", "", `Do you identify as LGBTQ+`),
     disability_identify = gsub(",.*$", "", `Do you identify as a person with a disability?`)) %>% 
@@ -1233,7 +1375,7 @@ spring_survey_result %>%
   ggtitle("GPA by Racial/Ethnic Identity for students surveyed in the spring semester") +   
   scale_fill_manual(values=nyuPalette) +
   geom_text(data = medians, aes(label = digits(gpa,2), y = gpa), vjust = -5, size = 5) +
-  labs(caption = "Note: Out of the 180 person survey, 17 students identified as black, 19 identified as Asian, 15 identified as Latinx/Hispanic, \n117 identified as white.") +
+  labs(caption = "Note: Out of the 196 unique identities accounted for, 17 students identified as black, 19 identified as Asian, \n15 identified as Latinx/Hispanic, 130 identified as white, 3 identified as Middle Eastern, and 12 did not answer.") +
   theme_bw() +
   theme(
     plot.title.position = "plot",
@@ -1252,12 +1394,13 @@ spring_survey_result %>%
     plot.margin=unit(c(0.5, 1, 1, 0.5),"cm")) +
   coord_flip()
 
-medians <- spring_survey_result %>%
+
+medians <- spring_survey_result_one %>%
   mutate(
     gpa = (civ_pro_grades + contracts_grades + crimlaw_grades) / 3, 
     class_year = gsub(",.*$", "", `What class year are you?`),
-    racial_ethnic_identity = gsub(",.*$", "", `What is your racial/ethnic identity?`),
-    gender_identity = gsub(",.*$", "", `What is your gender identity?`),
+    racial_ethnic_identity = gsub(",.*$", "", racial_ethnic_identity),
+    gender_identity = gsub(",.*$", "", gender_identity),
     first_generations_professional = gsub(",.*$", "", `Are you a first-generation professional?`),
     lgbtq_plus_identity = gsub(",.*$", "", `Do you identify as LGBTQ+`),
     disability_identify = gsub(",.*$", "", `Do you identify as a person with a disability?`)) %>% 
@@ -1266,12 +1409,12 @@ medians <- spring_survey_result %>%
   summarise(gpa = median(gpa, na.rm = TRUE)) %>% 
   filter(gender_identity %in% c("Male", "Female", "Non-binary"))
 
-spring_survey_result %>%
+spring_survey_result_one %>%
   mutate(
     gpa = (civ_pro_grades + contracts_grades + crimlaw_grades) / 3, 
     class_year = gsub(",.*$", "", `What class year are you?`),
-    racial_ethnic_identity = gsub(",.*$", "", `What is your racial/ethnic identity?`),
-    gender_identity = gsub(",.*$", "", `What is your gender identity?`),
+    racial_ethnic_identity = gsub(",.*$", "", racial_ethnic_identity),
+    gender_identity = gsub(",.*$", "", gender_identity),
     first_generations_professional = gsub(",.*$", "", `Are you a first-generation professional?`),
     lgbtq_plus_identity = gsub(",.*$", "", `Do you identify as LGBTQ+`),
     disability_identify = gsub(",.*$", "", `Do you identify as a person with a disability?`)) %>% 
@@ -1286,7 +1429,8 @@ spring_survey_result %>%
   scale_x_discrete() +
   scale_y_continuous("GPA", labels = comma, expand = c(0,0)) +
   geom_text(data = medians, aes(label = digits(gpa,2), y = gpa), vjust = -6, size = 5) +
-  labs(caption = "Note: Out of the 180 person survey, 5 students identified as non-binary.") +
+  # labs(caption = "Note: Out of the 180 person survey, 5 students identified as non-binary.") +
+  labs(caption = "Note: Out of the 196 unique identities accounted for, 103 students identified as female, 58 identified as male, \n4 identified as non-binary, 1 identified as neutral, and 20 did not answer.") +
   ggtitle("GPA by Gender Identity for students surveyed in the spring semester") +   
   scale_fill_manual(values=nyuPalette) +
   theme_bw() +
@@ -1307,13 +1451,13 @@ spring_survey_result %>%
     plot.margin=unit(c(0.5, 1, 1, 0.5),"cm")) +
   coord_flip()
 
-medians <- spring_survey_result %>%
+medians <- spring_survey_result_one %>%
   mutate(
     gpa = (civ_pro_grades + contracts_grades + crimlaw_grades) / 3, 
     class_year = gsub(",.*$", "", `What class year are you?`),
-    racial_ethnic_identity = gsub(",.*$", "", `What is your racial/ethnic identity?`),
-    gender_identity = gsub(",.*$", "", `What is your gender identity?`),
-    race_gender = paste(gsub(",.*$", "", `What is your racial/ethnic identity?`), gsub(",.*$", "", `What is your gender identity?`), sep = "--"),
+    racial_ethnic_identity = gsub(",.*$", "", racial_ethnic_identity),
+    gender_identity = gsub(",.*$", "", gender_identity),
+    race_gender = paste(gsub(",.*$", "", racial_ethnic_identity), gsub(",.*$", "", gender_identity), sep = "--"),
     first_generations_professional = gsub(",.*$", "", `Are you a first-generation professional?`),
     lgbtq_plus_identity = gsub(",.*$", "", `Do you identify as LGBTQ+`),
     disability_identify = gsub(",.*$", "", `Do you identify as a person with a disability?`)) %>% 
@@ -1324,13 +1468,13 @@ medians <- spring_survey_result %>%
   summarise(gpa = median(gpa, na.rm = TRUE))
   
 
-spring_survey_result %>%
+spring_survey_result_one %>%
   mutate(
     gpa = (civ_pro_grades + contracts_grades + crimlaw_grades) / 3, 
     class_year = gsub(",.*$", "", `What class year are you?`),
-    racial_ethnic_identity = gsub(",.*$", "", `What is your racial/ethnic identity?`),
-    gender_identity = gsub(",.*$", "", `What is your gender identity?`),
-    race_gender = paste(gsub(",.*$", "", `What is your racial/ethnic identity?`), gsub(",.*$", "", `What is your gender identity?`), sep = "--"),
+    racial_ethnic_identity = gsub(",.*$", "", racial_ethnic_identity),
+    gender_identity = gsub(",.*$", "", gender_identity),
+    race_gender = paste(gsub(",.*$", "", racial_ethnic_identity), gsub(",.*$", "", gender_identity), sep = "--"),
     first_generations_professional = gsub(",.*$", "", `Are you a first-generation professional?`),
     lgbtq_plus_identity = gsub(",.*$", "", `Do you identify as LGBTQ+`),
     disability_identify = gsub(",.*$", "", `Do you identify as a person with a disability?`)) %>% 
@@ -1340,8 +1484,8 @@ spring_survey_result %>%
   ggplot(aes(reorder(race_gender, gpa), gpa , group = race_gender, colour = race_gender)) +
   # geom_bar(alpha = 1.0, stat = "identity", show.legend = TRUE, position = "dodge") +
   geom_boxplot(aes(colour = race_gender)) +
-  scale_x_discrete(labels = c("Black--Female", "Black--Male", "Latinx/Hispanic--Female", "Latinx/Hispanic--Male", "Asian--Male", "Asian--Female", "White--Male", "White--Female")) +
-  labs(caption = "Note: Out of the 180 person survey, 17 students identified as black, 19 identified as Asian, 15 identified as \nLatinx/Hispanic, 117 identified as white.") +
+  # scale_x_discrete(labels = c("Black--Female", "Black--Male", "Latinx/Hispanic--Female", "Latinx/Hispanic--Male", "Asian--Male", "Asian--Female", "White--Male", "White--Female")) +
+  labs(caption = "Note: Out of the 196 unique identities accounted for, 17 students identified as black, 19 identified as Asian, \n15 identified as Latinx/Hispanic, 130 identified as white, 3 identified as Middle Eastern, and 12 did not answer. For \ngender, 103 students identified as female, 58 identified as male, 4 identified as non-binary, 1 identified as neutral, \nand 20 did not answer.") +
   scale_y_continuous("GPA", labels = comma, expand = c(0,0)) +
   ggtitle("GPA by Racial & Gender Identity for students surveyed in the spring semester") +   
   geom_text(data = medians, aes(label = digits(gpa,2), y = gpa), hjust = -0.21, size = 3) +
@@ -1420,36 +1564,51 @@ spring_survey_result %>%
 
 
 
-medians <- spring_survey_result %>%
+spring_survey_result_one = spring_survey_result_one %>% separate(`What do you plan on doing after you graduate? (feel free to select multiple)`, c("plan_1", "plan_2", "plan_3"), sep = ",")
+gathercols <- c("plan_1",
+                "plan_2",
+                "plan_3") 
+keycol <- colnames(spring_survey_result_one %>% select(-plan_1, -plan_2, -plan_3))
+valuecol <- "count"
+
+spring_survey_result_one <- gather(spring_survey_result_one, keycol, valuecol, gathercols, factor_key=TRUE)
+spring_survey_result_one = spring_survey_result_one %>% filter(!(is.na(valuecol) & keycol != 'plan_1'))
+# spring_by_answer_long = spring_by_answer_long %>% filter(!is.na(valuecol))
+spring_survey_result_one = spring_survey_result_one %>% select(-keycol)
+colnames(spring_survey_result_one)[which(names(spring_survey_result_one) == "valuecol")] <- "career_plans"
+
+spring_survey_result_one = spring_survey_result_one %>% mutate(career_plans = str_trim(career_plans))
+
+# spring_survey_result_one %>% group_by(career_plans) %>% summarise(n())
+
+medians <- spring_survey_result_one %>%
   mutate(
     gpa = (civ_pro_grades + contracts_grades + crimlaw_grades) / 3, 
     class_year = gsub(",.*$", "", `What class year are you?`),
-    racial_ethnic_identity = gsub(",.*$", "", `What is your racial/ethnic identity?`),
-    career_plans = gsub(",.*$", "", `What do you plan on doing after you graduate? (feel free to select multiple)`),
-    gender_identity = gsub(",.*$", "", `What is your gender identity?`),
-    race_gender = paste(gsub(",.*$", "", `What is your racial/ethnic identity?`), gsub(",.*$", "", `What is your gender identity?`), sep = "--"),
+    racial_ethnic_identity = gsub(",.*$", "", racial_ethnic_identity),
+    career_plans = gsub(",.*$", "", career_plans),
+    gender_identity = gsub(",.*$", "", gender_identity),
     first_generations_professional = gsub(",.*$", "", `Are you a first-generation professional?`),
     lgbtq_plus_identity = gsub(",.*$", "", `Do you identify as LGBTQ+`),
     disability_identify = gsub(",.*$", "", `Do you identify as a person with a disability?`)) %>% 
-  filter(career_plans %in% c("Private Law", "Public Interest/Government")) %>%
+  filter(career_plans %in% c("Private Law", "Public Interest/Government", "Clerkship")) %>%
   select(career_plans, gpa) %>% 
   group_by(career_plans) %>%
   summarise(gpa = median(gpa, na.rm = TRUE))
 
 
-spring_survey_result %>%
+spring_survey_result_one %>%
   # filter(valuecol %in% c('A', 'A-', 'B+', 'B', 'B-')) %>%
   mutate(
     gpa = (civ_pro_grades + contracts_grades + crimlaw_grades) / 3, 
     class_year = gsub(",.*$", "", `What class year are you?`),
-    racial_ethnic_identity = gsub(",.*$", "", `What is your racial/ethnic identity?`),
-    career_plans = gsub(",.*$", "", `What do you plan on doing after you graduate? (feel free to select multiple)`),
-    gender_identity = gsub(",.*$", "", `What is your gender identity?`),
-    race_gender = paste(gsub(",.*$", "", `What is your racial/ethnic identity?`), gsub(",.*$", "", `What is your gender identity?`), sep = "--"),
+    racial_ethnic_identity = gsub(",.*$", "", racial_ethnic_identity),
+    career_plans = gsub(",.*$", "", career_plans),
+    gender_identity = gsub(",.*$", "", gender_identity),
     first_generations_professional = gsub(",.*$", "", `Are you a first-generation professional?`),
     lgbtq_plus_identity = gsub(",.*$", "", `Do you identify as LGBTQ+`),
     disability_identify = gsub(",.*$", "", `Do you identify as a person with a disability?`)) %>% 
-  filter(career_plans %in% c("Private Law", "Public Interest/Government")) %>%
+  filter(career_plans %in% c("Private Law", "Public Interest/Government", "Clerkship")) %>%
   select(career_plans, gpa) %>%
   ggplot(aes(reorder(career_plans, gpa), gpa , group = career_plans, colour = career_plans)) +
   # geom_bar(alpha = 1.0, stat = "identity", show.legend = TRUE, position = "dodge") +
@@ -1458,8 +1617,8 @@ spring_survey_result %>%
   scale_y_continuous("GPA", labels = comma, expand = c(0,0)) +
   ggtitle("GPA by Career Plans for students surveyed in the spring semester") +   
   scale_fill_manual(values=nyuPalette) +
-  geom_text(data = medians, aes(label = digits(gpa,2), y = gpa), vjust = -9, size = 5) +
-  # labs(caption = "Note: Out of the 180 person survey, 11 students identified as having a disability.") +
+  geom_text(data = medians, aes(label = digits(gpa,2), y = gpa), vjust = -6, size = 5) +
+  labs(caption = "Note: Out of the 310 unique career plan selections, 127 were private law, 102 were public interest, \n77 were clerkships, and 4 did not respond.") +
   theme_bw() +
   theme(
     plot.title.position = "plot",
@@ -2072,12 +2231,13 @@ gathercols <- c('class_year',
 keycol <- c('response_id', 'career_plans')
 valuecol <- "count"
 
-
+# from original definition of spring_survey_result_agree_disagree on line 266 or so
 spring_by_answer_long <- gather(spring_survey_result_agree_disagree, keycol, valuecol, gathercols, factor_key=TRUE)
+
 
 spring_by_answer_long %>%
   filter(keycol == 'racial_ethnic_identity') %>%
-  filter(valuecol %in% c('Asian', 'White', 'Black', 'Latinex/Hispanic', 'White, Latinex/Hispanic')) %>%
+  filter(valuecol %in% c('Asian', 'White', 'Black', 'Latinex/Hispanic')) %>%
   group_by(valuecol, career_plans) %>%
   summarise(count = n()) %>%
   filter(career_plans %in% c('Public Interest/Government', 'Private Law')) %>%
